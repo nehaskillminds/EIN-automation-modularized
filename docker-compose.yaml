@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build: ./ein-automation
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./static:/app/ein-automation/static
+    environment:
+      - TENANT_ID=${TENANT_ID}
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
+      - AZURE_ACCESS_KEY=${AZURE_ACCESS_KEY}
+      - SALESFORCE_ENDPOINT=${SALESFORCE_ENDPOINT}
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET}
+      - SALESFORCE_USERNAME=${SALESFORCE_USERNAME}
+      - SALESFORCE_PASSWORD=${SALESFORCE_PASSWORD}
+      - SALESFORCE_TOKEN=${SALESFORCE_TOKEN}
+    restart: unless-stopped

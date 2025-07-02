@@ -1,0 +1,19 @@
+# azure-identity.yaml
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzureIdentity
+metadata:
+  name: ein-app-identity
+  namespace: default
+spec:
+  type: 0
+  resourceID: "/subscriptions/f50f1784-bf84-49bb-9b56-c1f99f925418/resourcegroups/corpnet-formpal-app-prod-24/providers/Microsoft.ManagedIdentity/userAssignedIdentities/ein-app-identity"
+  clientID: "9c912d82-263b-417f-84e4-90bbc6d71335"
+---
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzureIdentityBinding
+metadata:
+  name: ein-app-identity-binding
+  namespace: default
+spec:
+  azureIdentity: "ein-app-identity"
+  selector: "ein-app"

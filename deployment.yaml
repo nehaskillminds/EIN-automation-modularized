@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ein-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ein-app
+  template:
+    metadata:
+      labels:
+        app: ein-app
+      annotations:
+        aadpodidentitybinding: "ein-app-identity"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: ein-container
+        image: corpnetformpalacr.azurecr.io/ein-automation-app:latest
+        command: ["python", "-m", "uvicorn"]
+        args: ["main:app", "--host", "0.0.0.0", "--port", "8000"]
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PORT
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: PORT
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: API_KEY
+        - name: ALLOW_UNAUTHENTICATED_SALESFORCE
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: ALLOW_UNAUTHENTICATED_SALESFORCE
+        - name: SALESFORCE_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_ENDPOINT
+        - name: SALESFORCE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_CLIENT_ID
+        - name: SALESFORCE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_CLIENT_SECRET
+        - name: SALESFORCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_USERNAME
+        - name: SALESFORCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_PASSWORD
+        - name: SALESFORCE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: SALESFORCE_TOKEN
+        - name: AZURE_STORAGE_ACCOUNT_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: AZURE_STORAGE_ACCOUNT_NAME
+        - name: AZURE_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: AZURE_ACCESS_KEY
+        - name: AZURE-CONTAINER-NAME
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: AZURE_CONTAINER_NAME
+        - name: TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: TENANT_ID
+        - name: CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: CLIENT_ID
+        - name: CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: CLIENT_SECRET
+        - name: REDIRECT_URI
+          valueFrom:
+            secretKeyRef:
+              name: ein-secrets
+              key: REDIRECT_URI
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTHONPATH
+          value: /app/ein-automation
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "1.5Gi"
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 600
+          periodSeconds: 30
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 6
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          failureThreshold: 40
+          periodSeconds: 15
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "ein-secret-provider"
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ein-app-pdb
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ein-app

@@ -1,0 +1,44 @@
+# Core Web Framework
+fastapi>=0.68.0
+uvicorn>=0.15.0
+
+# Web Automation
+selenium==4.15.0
+webdriver-manager>=3.8.0  # Needed for ChromeDriver management
+
+# Web Requests
+httpx>=0.19.0
+requests>=2.26.0
+
+# Auth & Security
+python-jose>=3.3.0
+oauthlib>=3.2.0  # Implicit dependency for OAuth2
+pyjwt>=2.4.0  # Alternative/backup for python-jose
+
+# Azure SDKs
+azure-storage-blob>=12.9.0
+azure-identity>=1.10.0
+azure-keyvault-secrets>=4.6.0
+azure-core>=1.24.0  # Required by other Azure packages
+
+# Data Modeling & Processing
+pydantic>=1.8.0,<2.0.0  # Pinning to V1 since V2 has breaking changes
+psutil==5.9.8
+
+# PDF & Image Handling
+PyMuPDF>=1.18.0  # This provides the 'fitz' import
+
+# Async & Retry Logic
+tenacity>=8.0.0  # For @retry decorator
+  # Usually comes with Python but good to specify
+
+# Additional Utilities
+python-dotenv>=0.19.0  # For environment variable management
+  # Built-in but good to document
+python-dateutil>=2.8.0  # For datetime handling
+typing-extensions>=4.0.0  # For modern type hints
+
+# Runtime Dependencies
+chromedriver-binary>=100.0.0  # If you want bundled ChromeDriver
+
+pyvirtualdisplay==3.0 # For headless display support in Linux environments

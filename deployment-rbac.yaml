@@ -1,0 +1,102 @@
+# 1. Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ein-app-service-account
+  namespace: default
+
+---
+
+# 2. Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ein-app-role
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+
+---
+
+# 3. RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ein-app-rolebinding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: ein-app-service-account
+    namespace: default
+roleRef:
+  kind: Role
+  name: ein-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# 4. Deployment
+# 4. Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ein-app
+  labels:
+    app: ein-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ein-app
+  template:
+    metadata:
+      labels:
+        app: ein-app
+      annotations:
+        aadpodidbinding: ein-app # <-- Must match AzureIdentityBinding's selector if using pod identity
+    spec:
+      serviceAccountName: ein-app-service-account
+      containers:
+      - name: ein-container
+        image: corpnetformpalacr.azurecr.io/ein-automation-app:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: ein-secrets
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTHONPATH
+          value: /app/ein-automation
+        volumeMounts:
+        - name: secrets-store
+          mountPath: /mnt/secrets-store
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          failureThreshold: 30
+          periodSeconds: 10
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: ein-secret-provider
